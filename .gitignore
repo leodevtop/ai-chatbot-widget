@@ -1,0 +1,57 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+.report/
+
+# Node.js
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+.npm
+.eslintcache
+.next/
+.nuxt/
+.vercel/
+.turbo/
+.vite/
+.vscode/
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging.local
+
+# Editor/IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# macOS
+.DS_Store
+
+# Thumbnails
+.thumbnails/
+
+# Misc
+*.swp
+*.bak
+*.swo
+
+# ChromaDB
+chroma_data/
+
+# Docker
+Dockerfile.local
+docker-compose.local.yml
