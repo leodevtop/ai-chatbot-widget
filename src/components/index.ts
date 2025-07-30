@@ -4,3 +4,4 @@ export * from './chat-launcher-button/chat-launcher-button';
 export * from './teaser-message/teaser-message';
 export * from './chat-box/chat-box';
 export * from './quick-replies/quick-replies';
+export * from './chat-error-banner/chat-error-banner';

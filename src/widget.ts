@@ -13,6 +13,7 @@ import './components/chat-launcher-button/chat-launcher-button'; // Import the n
 import './components/teaser-message/teaser-message'; // Import the new teaser message component
 import './components/chat-box/chat-box'; // Import the new chat box component
 import './components/quick-replies/quick-replies'; // Import the new quick replies component
+import './components/chat-error-banner/chat-error-banner'; // Import the new error banner component
 
 @customElement('chatbot-widget')
 export class ChatbotWidget extends LitElement {
@@ -32,6 +33,8 @@ export class ChatbotWidget extends LitElement {
   @state() private isChatOpen = false; // New state to control chat window visibility
   @state() private teaserVisible = false; // New state for teaser message visibility
   @state() private quickReplies: string[] = []; // New state for quick replies
+  @state() private errorState: 'init' | 'reply' | null = null; // New state for error handling
+  private lastPrompt: string = ''; // To store the last user prompt for retry
 
   private typingInterval: number | null = null;
   private teaserTimeout: number | null = null;
@@ -73,8 +76,10 @@ export class ChatbotWidget extends LitElement {
         this.siteToken = token;
         this.sessionId = sessionId;
       });
+      this.errorState = null; // Clear error on successful init
       await this.addAssistantMessageAndFinalize(msgWelcome);
     } catch (err) {
+      this.errorState = 'init'; // Set error state for init failure
       await this.addAssistantMessageAndFinalize(msgError);
       console.error('[ChatbotWidget] Failed to initiate new session:', err);
     }
@@ -109,7 +114,26 @@ export class ChatbotWidget extends LitElement {
       ${this.isChatOpen && this.quickReplies.length > 0
         ? html`<quick-replies .replies=${this.quickReplies} @quick-reply-selected=${this._handleQuickReply}></quick-replies>`
         : ''}
+
+      ${this.errorState
+        ? html`<chat-error-banner
+            .visible=${!!this.errorState}
+            .errorType=${this.errorState}
+            @retry-action=${this._handleRetryAction}
+          ></chat-error-banner>`
+        : ''}
     `;
+  }
+
+  private _handleRetryAction(event: CustomEvent) {
+    const type = event.detail;
+    if (type === 'init') {
+      this.initSession(); // Retry session initialization
+    } else if (type === 'reply' && this.lastPrompt) {
+      this.userInput = this.lastPrompt; // Set userInput to lastPrompt for retry
+      this.sendUserMessage(); // Retry sending the last message
+    }
+    this.errorState = null; // Clear error banner after retry attempt
   }
 
   private _handleQuickReply(event: CustomEvent) {
@@ -170,6 +194,7 @@ export class ChatbotWidget extends LitElement {
     if (this.isLoading || !message || !this.sessionId) return; // Ensure sessionId is available
 
     this.isLoading = true;
+    this.lastPrompt = message; // Store the last prompt for retry
     this.userInput = ''; // reset input binding
     await this.requestUpdate(); // ensure DOM update
     const input = this.shadowRoot?.querySelector('input') as HTMLInputElement;
@@ -191,8 +216,10 @@ export class ChatbotWidget extends LitElement {
       );
 
       const html = renderMarkdown(aiReplyMarkdown); // Use the utility function
+      this.errorState = null; // Clear error on successful reply
       await this.addAssistantMessageAndFinalize(html);
     } catch (error) {
+      this.errorState = 'reply'; // Set error state for reply failure
       console.error('Error sending message:', error);
       await this.addAssistantMessageAndFinalize(smgError);
     }
