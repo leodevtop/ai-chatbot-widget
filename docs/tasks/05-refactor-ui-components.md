@@ -20,6 +20,7 @@ Tài liệu này mô tả kế hoạch tái cấu trúc `ChatbotWidget` để ch
   - [x] Tạo file `src/components/chat-box/chat-box.ts`.
   - [x] Di chuyển logic render header, messages, input area vào component này.
   - [x] Cập nhật `ChatbotWidget` để sử dụng component mới và truyền dữ liệu/hàm xử lý qua props.
+  - [x] Di chuyển `<QuickReplies>` và `<ChatErrorBanner>` vào bên trong `<ChatBox>`.
 - [x] Tách `<QuickReplies>`: các nút gợi ý câu hỏi.
   - [x] Tạo file `src/components/quick-replies/quick-replies.ts`.
   - [x] Di chuyển logic hiển thị và xử lý quick replies vào component này.
@@ -31,11 +32,12 @@ Tài liệu này mô tả kế hoạch tái cấu trúc `ChatbotWidget` để ch
 
 ### 2. Quản lý trạng thái UI
 
-- [ ] Xác định và tập trung các biến trạng thái UI chính trong `ChatbotWidget`.
+- [x] Xác định và tập trung các biến trạng thái UI chính trong `ChatbotWidget`.
   - [x] `isChatOpen: boolean` (đã có)
   - [x] `teaserVisible: boolean` (mới)
   - [x] `errorState: null | 'init' | 'reply'` (mới)
-- [ ] Đảm bảo các component con nhận trạng thái thông qua `@property` và phát sự kiện (`@event`) khi có tương tác.
+- [x] Đảm bảo các component con nhận trạng thái thông qua `@property` và phát sự kiện (`@event`) khi có tương tác.
+- [x] Gán các nút gợi ý câu hỏi mặc định vào `quickReplies` sau khi `initSession()` thành công.
 
 ### 3. Retry logic khi lỗi
 
@@ -50,7 +52,8 @@ Tài liệu này mô tả kế hoạch tái cấu trúc `ChatbotWidget` để ch
 
 ### 4. Yêu cầu render
 
-- [ ] Đảm bảo `render()` của `ChatbotWidget` chỉ tập trung vào việc điều phối các component con.
+- [x] Đảm bảo `render()` của `ChatbotWidget` chỉ tập trung vào việc điều phối các component con.
+- [x] Điều chỉnh `teaserDelay` từ 5 giây xuống 3 giây.
 - [ ] Xem xét tách `render()` ra file `.view.ts` nếu logic quá phức tạp (sẽ đánh giá sau khi tách component).
 
 ### Mục tiêu
