@@ -6,24 +6,9 @@ import { sendMessage } from './services/message.service'; // Import the new mess
 import { renderMarkdown } from './utils/markdown.utils'; // Import the markdown utility
 import { ChatbotSession, ChatMessage, Role } from './types';
 import { mystyles } from './styles';
+import { loadConfiguration } from './utils/config.utils'; // Import the new config utility
 
 import './components/button/ui-button';
-
-// Define a type for the global configuration object
-declare global {
-  interface Window {
-    ChatboxWidgetConfig?: {
-      position?: 'left' | 'right';
-      themeColor?: string;
-      title?: string;
-    };
-  }
-}
-
-const findSelfScript = () => {
-  const scripts = document.querySelectorAll('script');
-  return Array.from(scripts).find((s) => s.src?.includes('widget') || s.dataset.site);
-};
 
 @customElement('chatbot-widget')
 export class ChatbotWidget extends LitElement {
@@ -55,54 +40,13 @@ export class ChatbotWidget extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     console.log('[ChatbotWidget] Connected');
-    this.loadConfiguration();
+    loadConfiguration(this); // Use the new loadConfiguration utility
     console.log('[ChatbotWidget] Site ID:', this.siteId);
     this.initSession(); // Initialize session after configuration is loaded
   }
 
   firstUpdated() {
     // this.startTyping(); // typing animation
-  }
-
-  private loadConfiguration() {
-    const script = (document.currentScript as HTMLScriptElement | null) || findSelfScript();
-    if (!script) {
-      console.warn('[ChatbotWidget] Không tìm thấy <script> để đọc config.');
-      return;
-    }
-
-    const url = new URL(script.src, location.href);
-    const urlParams = url.searchParams;
-
-    // Ưu tiên 1: ChatboxWidgetConfig
-    const config = window.ChatboxWidgetConfig;
-    if (config) {
-      if (config.position) this.position = config.position;
-      if (config.themeColor) this.themeColor = config.themeColor;
-      if (config.title) this.title = config.title;
-    }
-
-    // Ưu tiên 2: ?id trên src
-    const urlId = urlParams.get('id');
-    if (urlId) {
-      this.siteId = urlId;
-    }
-
-    // Ưu tiên 3: data-site trên <script>
-    const datasetSiteId = script.dataset.site;
-    if (!urlId && datasetSiteId) {
-      this.siteId = datasetSiteId;
-    }
-
-    // Token (nếu có)
-    const datasetToken = script.dataset.token;
-    if (datasetToken) {
-      this.siteToken = datasetToken;
-    }
-
-    this.style.setProperty('--chatbot-primary-color', this.themeColor);
-    this.style.setProperty('--chatbot-primary-light-color', this.themeColor + 'B3');
-    this.style.setProperty('--chatbot-position', this.position);
   }
 
   private async initSession() {
@@ -201,6 +145,12 @@ export class ChatbotWidget extends LitElement {
     this.scrollToBottom();
   }
 
+  async sendByAssistant(message: string) {
+    this.messages = [...this.messages, { content: message, role: Role.Assistant }];
+    await this.requestUpdate();
+    this.scrollToBottom();
+  }
+
   // Send user message and fetch AI reply
   async _sendMessage() {
     const message = this.userInput.trim();
@@ -240,14 +190,13 @@ export class ChatbotWidget extends LitElement {
   }
 
   startTyping() {
-    const dotStates = ['Đang gõ.', 'Đang gõ..', 'Đang gõ...'];
-    let index = 0;
-
     if (this.typingInterval) {
+      // Clear existing interval if any
       clearInterval(this.typingInterval);
-      this.typingInterval = null;
     }
 
+    const dotStates = ['Đang gõ.', 'Đang gõ..', 'Đang gõ...'];
+    let index = 0;
     this.typingIndicator = dotStates[0];
 
     this.typingInterval = window.setInterval(() => {
