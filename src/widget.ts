@@ -12,6 +12,7 @@ import './components/button/ui-button';
 import './components/chat-launcher-button/chat-launcher-button'; // Import the new component
 import './components/teaser-message/teaser-message'; // Import the new teaser message component
 import './components/chat-box/chat-box'; // Import the new chat box component
+import './components/quick-replies/quick-replies'; // Import the new quick replies component
 
 @customElement('chatbot-widget')
 export class ChatbotWidget extends LitElement {
@@ -30,6 +31,7 @@ export class ChatbotWidget extends LitElement {
   @state() private sessionId: string | null = null;
   @state() private isChatOpen = false; // New state to control chat window visibility
   @state() private teaserVisible = false; // New state for teaser message visibility
+  @state() private quickReplies: string[] = []; // New state for quick replies
 
   private typingInterval: number | null = null;
   private teaserTimeout: number | null = null;
@@ -103,7 +105,17 @@ export class ChatbotWidget extends LitElement {
         @user-input=${this.handleInput}
         @send-message=${this.sendUserMessage}
       ></chat-box>
+
+      ${this.isChatOpen && this.quickReplies.length > 0
+        ? html`<quick-replies .replies=${this.quickReplies} @quick-reply-selected=${this._handleQuickReply}></quick-replies>`
+        : ''}
     `;
+  }
+
+  private _handleQuickReply(event: CustomEvent) {
+    const reply = event.detail;
+    this.userInput = reply;
+    this.sendUserMessage();
   }
 
   private _handleToggleChat() {
