@@ -62,6 +62,9 @@ Tài liệu này mô tả kế hoạch tái cấu trúc `ChatbotWidget` để ch
 - [x] Xóa gọi `initSession()` từ `connectedCallback()`.
 - [x] Gọi `initSession()` trong `_handleToggleChat()` khi chatbox được mở lần đầu.
 - [x] Điều chỉnh `initSession()` để thêm tin nhắn chào mừng chỉ khi phiên thành công và `messages.length === 0`.
+- [ ] Gọi `initSession()` trong `connectedCallback()` để khởi tạo phiên ngay khi trang tải.
+- [ ] Điều chỉnh `initSession()`: nếu thành công, thêm lời chào; nếu lỗi, chỉ thêm tin nhắn lỗi và đặt `errorState` (không mở chatbox).
+- [ ] Điều chỉnh `_handleToggleChat()`: chỉ chuyển đổi `isChatOpen`, không gọi `initSession()` hay thêm lời chào.
 
 ### Mục tiêu
 
