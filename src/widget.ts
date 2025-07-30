@@ -8,7 +8,6 @@ import { ChatbotSession, ChatMessage, Role } from './types'; // Import ChatbotSe
 import { mystyles } from './styles';
 import { loadConfiguration } from './utils/config.utils'; // Import the new config utility
 
-import './components/button/ui-button';
 import './components/chat-launcher-button/chat-launcher-button'; // Import the new component
 import './components/teaser-message/teaser-message'; // Import the new teaser message component
 import './components/chat-box/chat-box'; // Import the new chat box component
@@ -18,15 +17,15 @@ import './components/chat-error-banner/chat-error-banner'; // Import the new err
 @customElement('chatbot-widget')
 export class ChatbotWidget extends LitElement {
   // Public properties
-  @property({ type: String }) siteId = 'site-001';
-  @property({ type: String }) siteToken = '';
-  @property({ type: String }) position: 'left' | 'right' = 'right';
-  @property({ type: String }) themeColor = '#4caf50';
-  @property({ type: String }) title = 'Chatbot';
+  @property({ type: String }) siteId!: string;
+  @property({ type: String }) siteToken!: string;
+  @property({ type: String }) position!: 'left' | 'right';
+  @property({ type: String }) themeColor!: string;
+  @property({ type: String }) title!: string;
 
   // Internal reactive states
   @state() private messages: ChatMessage[] = [];
-  @state() private userInput = '';
+  @state() private userInput: string = ''; // Ensure it's always initialized as a string
   @state() private isLoading = false;
   @state() private typingIndicator: string | null = null;
   @state() private sessionId: string | null = null;
@@ -38,6 +37,13 @@ export class ChatbotWidget extends LitElement {
 
   private typingInterval: number | null = null;
   private teaserTimeout: number | null = null;
+
+  constructor() {
+    super();
+      this.position = 'right';
+      this.themeColor = '#4caf50';
+      this.title = 'Chatbot';
+  }
 
   connectedCallback() {
     super.connectedCallback();
@@ -62,12 +68,14 @@ export class ChatbotWidget extends LitElement {
     this.startTyping(); // Keep typing indicator for session initiation
 
     try {
-      const session = getStoredSession();
+      const storedSession = getStoredSession();
       let currentSession: ChatbotSession;
 
-      if (session) {
-        currentSession = session;
+      if (storedSession) {
+        console.log('[ChatbotWidget] Using stored session.');
+        currentSession = storedSession;
       } else {
+        console.log('[ChatbotWidget] Requesting new session (no stored or expired).');
         currentSession = await requestNewSession(this.siteId);
       }
 
@@ -75,6 +83,7 @@ export class ChatbotWidget extends LitElement {
         this.siteToken = token;
         this.sessionId = sessionId;
       });
+      console.log('[ChatbotWidget] Session initialized/used successfully. Session ID:', this.sessionId);
 
       this.errorState = null; // Clear error on successful init
       this.quickReplies = ['Giá dịch vụ', 'Tính năng', 'Liên hệ hỗ trợ']; // Set default quick replies
