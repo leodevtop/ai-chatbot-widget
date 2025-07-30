@@ -9,6 +9,7 @@ import { mystyles } from './styles';
 import { loadConfiguration } from './utils/config.utils'; // Import the new config utility
 
 import './components/button/ui-button';
+import './components/chat-launcher-button/chat-launcher-button'; // Import the new component
 
 @customElement('chatbot-widget')
 export class ChatbotWidget extends LitElement {
@@ -27,13 +28,13 @@ export class ChatbotWidget extends LitElement {
   @state() private sessionId: string | null = null;
   @state() private isChatOpen = false; // New state to control chat window visibility
 
-  private toggleChat() {
-    this.isChatOpen = !this.isChatOpen;
-    if (this.isChatOpen) {
-      // When opening, ensure scroll to bottom
-      this.updateComplete.then(() => this.scrollToBottom());
-    }
-  }
+  // No longer needed here, moved to ChatLauncherButton
+  // private toggleChat() {
+  //   this.isChatOpen = !this.isChatOpen;
+  //   if (this.isChatOpen) {
+  //     this.updateComplete.then(() => this.scrollToBottom());
+  //   }
+  // }
 
   private typingInterval: number | null = null;
 
@@ -82,10 +83,11 @@ export class ChatbotWidget extends LitElement {
   // Main render function
   render() {
     return html`
-      <ui-button @click=${this.toggleChat}>
-        ${this.isChatOpen ? html`&#x2715;` : html`&#x1F4AC;`}
-        <!-- X or Chat bubble icon -->
-      </ui-button>
+      <chat-launcher-button
+        .isChatOpen=${this.isChatOpen}
+        @toggle-chat=${this._handleToggleChat}
+      ></chat-launcher-button>
+
       <div class="container ${this.isChatOpen ? 'open' : ''}">
         <div class="header">${this.title}</div>
         <div class="messages">
@@ -111,6 +113,13 @@ export class ChatbotWidget extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  private _handleToggleChat() {
+    this.isChatOpen = !this.isChatOpen;
+    if (this.isChatOpen) {
+      this.updateComplete.then(() => this.scrollToBottom());
+    }
   }
 
   // Handle user typing
