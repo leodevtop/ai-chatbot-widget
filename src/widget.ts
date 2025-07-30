@@ -151,6 +151,8 @@ export class ChatbotWidget extends LitElement {
 
   private _handleToggleChat() {
     this.isChatOpen = !this.isChatOpen;
+    // No additional logic here, just toggle the state.
+    // The rendering of chatbox and welcome message is handled by render() and initSession()
     if (this.isChatOpen) {
       this.teaserVisible = false; // Hide teaser when chat opens
       if (this.teaserTimeout) {
