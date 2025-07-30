@@ -108,26 +108,40 @@ export class ChatbotWidget extends LitElement {
   private async initSession() {
     const msgWelcome = '<p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p>';
     const msgError = '<p>Lỗi: Không thể khởi tạo phiên chat.</p>';
+    const addMessage = (content: string) => {
+      this.messages = [...this.messages, { content, role: Role.Assistant }];
+    };
+    const finalize = async () => {
+      this.stopTyping();
+      await this.requestUpdate();
+      this.scrollToBottom();
+    };
 
-    const applySession = (session: ChatbotSession) => {
+    this.startTyping();
+
+    const session = getStoredSession();
+    if (session) {
       useSession(session, (token, sessionId) => {
         this.siteToken = token;
         this.sessionId = sessionId;
       });
-      this.startTyping();
-      this.sendByAssistant(msgWelcome);
-    };
-
-    const stored = getStoredSession();
-    if (stored) return applySession(stored);
+      addMessage(msgWelcome);
+      return finalize();
+    }
 
     try {
-      const session = await requestNewSession(this.siteId);
-      this.sendByAssistant(msgWelcome);
+      const newSession = await requestNewSession(this.siteId);
+      useSession(newSession, (token, sessionId) => {
+        this.siteToken = token;
+        this.sessionId = sessionId;
+      });
+      addMessage(msgWelcome);
     } catch (err) {
-      this.sendByAssistant(msgError);
+      addMessage(msgError);
       console.error('[ChatbotWidget] Failed to initiate new session:', err);
     }
+
+    await finalize();
   }
 
   // CSS styling for the chatbot UI
