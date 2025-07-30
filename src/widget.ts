@@ -44,7 +44,7 @@ export class ChatbotWidget extends LitElement {
     console.log('[ChatbotWidget] Connected');
     loadConfiguration(this); // Use the new loadConfiguration utility
     console.log('[ChatbotWidget] Site ID:', this.siteId);
-    this.initSession(); // Initialize session after configuration is loaded
+    // initSession() will now be called when the chatbox is opened for the first time
   }
 
   firstUpdated() {
@@ -57,6 +57,7 @@ export class ChatbotWidget extends LitElement {
   }
 
   private async initSession() {
+    const msgWelcome = '<p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p>';
     const msgError = '<p>Lỗi: Không thể khởi tạo phiên chat.</p>';
     this.startTyping(); // Keep typing indicator for session initiation
 
@@ -71,6 +72,12 @@ export class ChatbotWidget extends LitElement {
       this.stopTyping(); // Stop typing after session is established
       await this.requestUpdate();
       this.scrollToBottom();
+      // Add welcome message only if messages are empty
+      if (this.messages.length === 0) {
+        this.messages = [...this.messages, { content: msgWelcome, role: Role.Assistant }];
+        await this.requestUpdate();
+        this.scrollToBottom();
+      }
       return;
     }
 
@@ -82,16 +89,21 @@ export class ChatbotWidget extends LitElement {
       });
       this.errorState = null; // Clear error on successful init
       this.quickReplies = ['Giá dịch vụ', 'Tính năng', 'Liên hệ hỗ trợ']; // Set default quick replies
+      this.stopTyping(); // Stop typing after session is established
+      await this.requestUpdate();
+      this.scrollToBottom();
+      // Add welcome message only if messages are empty
+      if (this.messages.length === 0) {
+        this.messages = [...this.messages, { content: msgWelcome, role: Role.Assistant }];
+        await this.requestUpdate();
+        this.scrollToBottom();
+      }
     } catch (err) {
       this.errorState = 'init'; // Set error state for init failure
       this.quickReplies = []; // Clear quick replies on error
       await this.addAssistantMessageAndFinalize(msgError); // Use finalize for error message
       console.error('[ChatbotWidget] Failed to initiate new session:', err);
-      return;
     }
-    this.stopTyping(); // Stop typing after session is established
-    await this.requestUpdate();
-    this.scrollToBottom();
   }
 
   // CSS styling for the chatbot UI
@@ -154,9 +166,15 @@ export class ChatbotWidget extends LitElement {
         clearTimeout(this.teaserTimeout);
         this.teaserTimeout = null;
       }
-      // Add welcome message only when chat is opened for the first time
-      if (this.messages.length === 0 && this.sessionId) {
-        this.addAssistantMessageAndFinalize(msgWelcome);
+      // Initialize session and add welcome message if chat is opened for the first time
+      if (!this.sessionId) {
+        this.initSession().then(() => {
+          if (this.sessionId && this.messages.length === 0) {
+            this.addAssistantMessageAndFinalize(msgWelcome);
+          } else {
+            this.updateComplete.then(() => this.scrollToBottom());
+          }
+        });
       } else {
         this.updateComplete.then(() => this.scrollToBottom());
       }
