@@ -18,7 +18,6 @@ export class ChatBox extends LitElement {
 
   static styles = css`
     :host {
-      display: block;
       /* Styles for the chat container */
       position: fixed;
       bottom: 90px; /* Adjust based on launcher button size */
@@ -33,6 +32,16 @@ export class ChatBox extends LitElement {
       overflow: hidden;
       transition: all 0.3s ease;
       z-index: 998; /* Below launcher button, above teaser */
+      /* Initially hidden */
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+    }
+
+    :host(.open) {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
     }
 
     .header {
