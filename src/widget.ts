@@ -11,6 +11,7 @@ import { loadConfiguration } from './utils/config.utils'; // Import the new conf
 import './components/button/ui-button';
 import './components/chat-launcher-button/chat-launcher-button'; // Import the new component
 import './components/teaser-message/teaser-message'; // Import the new teaser message component
+import './components/chat-box/chat-box'; // Import the new chat box component
 
 @customElement('chatbot-widget')
 export class ChatbotWidget extends LitElement {
@@ -92,30 +93,16 @@ export class ChatbotWidget extends LitElement {
         ? html`<teaser-message .visible=${this.teaserVisible}></teaser-message>`
         : ''}
 
-      <div class="container ${this.isChatOpen ? 'open' : ''}">
-        <div class="header">${this.title}</div>
-        <div class="messages">
-          ${this.messages.map(
-            (msg) => html`<div class="message ${msg.role}">
-              ${msg.role === Role.Assistant ? unsafeHTML(msg.content) : msg.content}
-            </div>`
-          )}
-          ${this.typingIndicator ? html`<div class="message assistant typing">${this.typingIndicator}</div>` : ''}
-        </div>
-        <div class="input-area">
-          <input
-            type="text"
-            .value=${this.userInput}
-            @input=${this.handleInput}
-            @keydown=${this.handleKeyDown}
-            placeholder="Đặt câu hỏi..."
-            ?disabled=${this.isLoading}
-          />
-          <button @click=${this.sendUserMessage} ?disabled=${this.isLoading || !this.userInput.trim()}>
-            ${this.isLoading ? '...' : 'Gửi'}
-          </button>
-        </div>
-      </div>
+      <chat-box
+        class="${this.isChatOpen ? 'open' : ''}"
+        .title=${this.title}
+        .messages=${this.messages}
+        .userInput=${this.userInput}
+        .isLoading=${this.isLoading}
+        .typingIndicator=${this.typingIndicator}
+        @user-input=${this.handleInput}
+        @send-message=${this.sendUserMessage}
+      ></chat-box>
     `;
   }
 
