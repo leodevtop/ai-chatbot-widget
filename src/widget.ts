@@ -53,7 +53,7 @@ export class ChatbotWidget extends LitElement {
       if (!this.isChatOpen) {
         this.teaserVisible = true;
       }
-    }, 5000); // Show after 5 seconds
+    }, 3000); // Show after 3 seconds
   }
 
   private async initSession() {
@@ -77,9 +77,11 @@ export class ChatbotWidget extends LitElement {
         this.sessionId = sessionId;
       });
       this.errorState = null; // Clear error on successful init
+      this.quickReplies = ['Giá dịch vụ', 'Tính năng', 'Liên hệ hỗ trợ']; // Set default quick replies
       await this.addAssistantMessageAndFinalize(msgWelcome);
     } catch (err) {
       this.errorState = 'init'; // Set error state for init failure
+      this.quickReplies = []; // Clear quick replies on error
       await this.addAssistantMessageAndFinalize(msgError);
       console.error('[ChatbotWidget] Failed to initiate new session:', err);
     }
@@ -107,23 +109,17 @@ export class ChatbotWidget extends LitElement {
         .userInput=${this.userInput}
         .isLoading=${this.isLoading}
         .typingIndicator=${this.typingIndicator}
+        .quickReplies=${this.quickReplies}
+        .errorState=${this.errorState}
+        .lastPrompt=${this.lastPrompt}
         @user-input=${this.handleInput}
         @send-message=${this.sendUserMessage}
+        @quick-reply-selected=${this._handleQuickReply}
+        @retry-action=${this._handleRetryAction}
       ></chat-box>
-
-      ${this.isChatOpen && this.quickReplies.length > 0
-        ? html`<quick-replies .replies=${this.quickReplies} @quick-reply-selected=${this._handleQuickReply}></quick-replies>`
-        : ''}
-
-      ${this.errorState
-        ? html`<chat-error-banner
-            .visible=${!!this.errorState}
-            .errorType=${this.errorState}
-            @retry-action=${this._handleRetryAction}
-          ></chat-error-banner>`
-        : ''}
     `;
   }
+
 
   private _handleRetryAction(event: CustomEvent) {
     const type = event.detail;

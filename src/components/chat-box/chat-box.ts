@@ -2,6 +2,8 @@ import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { ChatMessage, Role } from '../../types'; // Adjust path as needed
+import '../quick-replies/quick-replies'; // Import QuickReplies
+import '../chat-error-banner/chat-error-banner'; // Import ChatErrorBanner
 
 @customElement('chat-box')
 export class ChatBox extends LitElement {
@@ -10,6 +12,9 @@ export class ChatBox extends LitElement {
   @property({ type: String }) userInput = '';
   @property({ type: Boolean }) isLoading = false;
   @property({ type: String }) typingIndicator: string | null = null;
+  @property({ type: Array }) quickReplies: string[] = []; // New property for quick replies
+  @property({ type: String }) errorState: 'init' | 'reply' | null = null; // New property for error state
+  @property({ type: String }) lastPrompt: string = ''; // New property for last prompt
 
   static styles = css`
     :host {
@@ -139,6 +144,18 @@ export class ChatBox extends LitElement {
           ${this.isLoading ? '...' : 'Gửi'}
         </button>
       </div>
+
+      ${this.quickReplies.length > 0
+        ? html`<quick-replies .replies=${this.quickReplies} @quick-reply-selected=${this._handleQuickReply}></quick-replies>`
+        : ''}
+
+      ${this.errorState
+        ? html`<chat-error-banner
+            .visible=${!!this.errorState}
+            .errorType=${this.errorState}
+            @retry-action=${this._handleRetryAction}
+          ></chat-error-banner>`
+        : ''}
     `;
   }
 
@@ -154,5 +171,13 @@ export class ChatBox extends LitElement {
 
   private _sendMessage() {
     this.dispatchEvent(new CustomEvent('send-message'));
+  }
+
+  private _handleQuickReply(event: CustomEvent) {
+    this.dispatchEvent(new CustomEvent('quick-reply-selected', { detail: event.detail }));
+  }
+
+  private _handleRetryAction(event: CustomEvent) {
+    this.dispatchEvent(new CustomEvent('retry-action', { detail: event.detail }));
   }
 }
