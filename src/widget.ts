@@ -105,7 +105,7 @@ export class ChatbotWidget extends LitElement {
             placeholder="Đặt câu hỏi..."
             ?disabled=${this.isLoading}
           />
-          <button @click=${this._sendMessage} ?disabled=${this.isLoading || !this.userInput.trim()}>
+          <button @click=${this.sendUserMessage} ?disabled=${this.isLoading || !this.userInput.trim()}>
             ${this.isLoading ? '...' : 'Gửi'}
           </button>
         </div>
@@ -122,7 +122,7 @@ export class ChatbotWidget extends LitElement {
   // Handle Enter key to send message
   handleKeyDown(event: KeyboardEvent) {
     if (event.key === 'Enter') {
-      this._sendMessage();
+      this.sendUserMessage();
     }
   }
 
@@ -146,7 +146,7 @@ export class ChatbotWidget extends LitElement {
   }
 
   // Send user message and fetch AI reply
-  async _sendMessage() {
+  async sendUserMessage() {
     const message = this.userInput.trim();
     const smgError = 'Lỗi: Không lấy được câu trả lời.';
 
