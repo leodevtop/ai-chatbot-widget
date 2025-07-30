@@ -4,7 +4,7 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { getStoredSession, requestNewSession, useSession } from './services/session.service';
 import { sendMessage } from './services/message.service'; // Import the new message service
 import { renderMarkdown } from './utils/markdown.utils'; // Import the markdown utility
-import { ChatbotSession, ChatMessage, Role } from './types';
+import { ChatMessage, Role } from './types';
 import { mystyles } from './styles';
 import { loadConfiguration } from './utils/config.utils'; // Import the new config utility
 
@@ -52,15 +52,6 @@ export class ChatbotWidget extends LitElement {
   private async initSession() {
     const msgWelcome = '<p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p>';
     const msgError = '<p>Lỗi: Không thể khởi tạo phiên chat.</p>';
-    const addMessage = (content: string) => {
-      this.messages = [...this.messages, { content, role: Role.Assistant }];
-    };
-    const finalize = async () => {
-      this.stopTyping();
-      await this.requestUpdate();
-      this.scrollToBottom();
-    };
-
     this.startTyping();
 
     const session = getStoredSession();
@@ -69,8 +60,7 @@ export class ChatbotWidget extends LitElement {
         this.siteToken = token;
         this.sessionId = sessionId;
       });
-      addMessage(msgWelcome);
-      return finalize();
+      return this.addAssistantMessageAndFinalize(msgWelcome);
     }
 
     try {
@@ -79,13 +69,11 @@ export class ChatbotWidget extends LitElement {
         this.siteToken = token;
         this.sessionId = sessionId;
       });
-      addMessage(msgWelcome);
+      await this.addAssistantMessageAndFinalize(msgWelcome);
     } catch (err) {
-      addMessage(msgError);
+      await this.addAssistantMessageAndFinalize(msgError);
       console.error('[ChatbotWidget] Failed to initiate new session:', err);
     }
-
-    await finalize();
   }
 
   // CSS styling for the chatbot UI
@@ -145,7 +133,13 @@ export class ChatbotWidget extends LitElement {
     this.scrollToBottom();
   }
 
+  private async addAssistantMessageAndFinalize(message: string) {
+    this.messages = [...this.messages, { content: message, role: Role.Assistant }];
+    await this.finalizeMessageProcessing();
+  }
+
   async sendByAssistant(message: string) {
+    // This function is now simplified, as finalizeMessageProcessing is handled elsewhere
     this.messages = [...this.messages, { content: message, role: Role.Assistant }];
     await this.requestUpdate();
     this.scrollToBottom();
@@ -180,12 +174,10 @@ export class ChatbotWidget extends LitElement {
       );
 
       const html = renderMarkdown(aiReplyMarkdown); // Use the utility function
-      this.messages = [...this.messages, { content: html, role: Role.Assistant }];
+      await this.addAssistantMessageAndFinalize(html);
     } catch (error) {
       console.error('Error sending message:', error);
-      this.messages = [...this.messages, { content: smgError, role: Role.Assistant }];
-    } finally {
-      await this.finalizeMessageProcessing(); // Call the new finalize function
+      await this.addAssistantMessageAndFinalize(smgError);
     }
   }
 
