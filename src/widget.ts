@@ -57,9 +57,8 @@ export class ChatbotWidget extends LitElement {
   }
 
   private async initSession() {
-    const msgWelcome = '<p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p>';
     const msgError = '<p>Lỗi: Không thể khởi tạo phiên chat.</p>';
-    this.startTyping();
+    this.startTyping(); // Keep typing indicator for session initiation
 
     const session = getStoredSession();
     if (session) {
@@ -67,7 +66,12 @@ export class ChatbotWidget extends LitElement {
         this.siteToken = token;
         this.sessionId = sessionId;
       });
-      return this.addAssistantMessageAndFinalize(msgWelcome);
+      this.errorState = null; // Clear error on successful init
+      this.quickReplies = ['Giá dịch vụ', 'Tính năng', 'Liên hệ hỗ trợ']; // Set default quick replies
+      this.stopTyping(); // Stop typing after session is established
+      await this.requestUpdate();
+      this.scrollToBottom();
+      return;
     }
 
     try {
@@ -78,13 +82,16 @@ export class ChatbotWidget extends LitElement {
       });
       this.errorState = null; // Clear error on successful init
       this.quickReplies = ['Giá dịch vụ', 'Tính năng', 'Liên hệ hỗ trợ']; // Set default quick replies
-      await this.addAssistantMessageAndFinalize(msgWelcome);
     } catch (err) {
       this.errorState = 'init'; // Set error state for init failure
       this.quickReplies = []; // Clear quick replies on error
-      await this.addAssistantMessageAndFinalize(msgError);
+      await this.addAssistantMessageAndFinalize(msgError); // Use finalize for error message
       console.error('[ChatbotWidget] Failed to initiate new session:', err);
+      return;
     }
+    this.stopTyping(); // Stop typing after session is established
+    await this.requestUpdate();
+    this.scrollToBottom();
   }
 
   // CSS styling for the chatbot UI
@@ -139,6 +146,7 @@ export class ChatbotWidget extends LitElement {
   }
 
   private _handleToggleChat() {
+    const msgWelcome = '<p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p>';
     this.isChatOpen = !this.isChatOpen;
     if (this.isChatOpen) {
       this.teaserVisible = false; // Hide teaser when chat opens
@@ -146,7 +154,12 @@ export class ChatbotWidget extends LitElement {
         clearTimeout(this.teaserTimeout);
         this.teaserTimeout = null;
       }
-      this.updateComplete.then(() => this.scrollToBottom());
+      // Add welcome message only when chat is opened for the first time
+      if (this.messages.length === 0 && this.sessionId) {
+        this.addAssistantMessageAndFinalize(msgWelcome);
+      } else {
+        this.updateComplete.then(() => this.scrollToBottom());
+      }
     }
   }
 
@@ -184,7 +197,8 @@ export class ChatbotWidget extends LitElement {
 
   // Send user message and fetch AI reply
   async sendUserMessage() {
-    const message = this.userInput.trim();
+    // Ensure userInput is always a string before trimming
+    const message = (this.userInput || '').trim();
     const smgError = 'Lỗi: Không lấy được câu trả lời.';
 
     if (this.isLoading || !message || !this.sessionId) return; // Ensure sessionId is available
