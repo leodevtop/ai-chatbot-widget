@@ -38,6 +38,7 @@ Tài liệu này mô tả kế hoạch tái cấu trúc `ChatbotWidget` để ch
   - [x] `errorState: null | 'init' | 'reply'` (mới)
 - [x] Đảm bảo các component con nhận trạng thái thông qua `@property` và phát sự kiện (`@event`) khi có tương tác.
 - [x] Gán các nút gợi ý câu hỏi mặc định vào `quickReplies` sau khi `initSession()` thành công.
+- [x] Đảm bảo tin nhắn chào mừng chỉ xuất hiện khi chatbox được mở lần đầu tiên và phiên đã được khởi tạo thành công.
 
 ### 3. Retry logic khi lỗi
 
@@ -55,6 +56,12 @@ Tài liệu này mô tả kế hoạch tái cấu trúc `ChatbotWidget` để ch
 - [x] Đảm bảo `render()` của `ChatbotWidget` chỉ tập trung vào việc điều phối các component con.
 - [x] Điều chỉnh `teaserDelay` từ 5 giây xuống 3 giây.
 - [ ] Xem xét tách `render()` ra file `.view.ts` nếu logic quá phức tạp (sẽ đánh giá sau khi tách component).
+
+### 5. Điều chỉnh luồng khởi tạo phiên và tin nhắn chào mừng
+
+- [x] Xóa gọi `initSession()` từ `connectedCallback()`.
+- [x] Gọi `initSession()` trong `_handleToggleChat()` khi chatbox được mở lần đầu.
+- [x] Điều chỉnh `initSession()` để thêm tin nhắn chào mừng chỉ khi phiên thành công và `messages.length === 0`.
 
 ### Mục tiêu
 
