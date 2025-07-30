@@ -20,7 +20,7 @@ Tài liệu này mô tả kế hoạch tái cấu trúc `ChatbotWidget` để ch
   - [x] Tạo file `src/components/chat-box/chat-box.ts`.
   - [x] Di chuyển logic render header, messages, input area vào component này.
   - [x] Cập nhật `ChatbotWidget` để sử dụng component mới và truyền dữ liệu/hàm xử lý qua props.
-- [ ] Tách `<QuickReplies>`: các nút gợi ý câu hỏi.
+- [x] Tách `<QuickReplies>`: các nút gợi ý câu hỏi.
   - [x] Tạo file `src/components/quick-replies/quick-replies.ts`.
   - [x] Di chuyển logic hiển thị và xử lý quick replies vào component này.
   - [x] Cập nhật `ChatboxWidget` để sử dụng component mới.
