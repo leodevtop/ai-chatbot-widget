@@ -5,6 +5,7 @@ import { getStoredSession, requestNewSession, useSession } from './services/sess
 import { sendMessage } from './services/message.service'; // Import the new message service
 import { renderMarkdown } from './utils/markdown.utils'; // Import the markdown utility
 import { ChatMessage, Role } from './types';
+import { mystyles } from './styles';
 
 // Define a type for the global configuration object
 declare global {
@@ -110,167 +111,17 @@ export class ChatbotWidget extends LitElement {
     }
   }
 
-  // CSS styling for the chatbot UI
-  static styles = css`
-    :host {
-      display: block;
-      font-size: 13px;
-      font-family: sans-serif;
-      --chatbot-primary-color: #4caf50; /* Default, overridden by themeColor */
-      --chatbot-primary-light-color: rgba(76, 175, 79, 0.7); /* Default, overridden by themeColor */
-      --chatbot-text-color: #333;
-      --chatbot-bg-color: #f9f9f9;
-      --chatbot-border-color: #ddd;
-      --chatbot-position: right; /* Default, overridden by position */
-    }
-
-    .chat-button {
-      position: fixed;
-      bottom: 20px;
-      z-index: 10000;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background-color: var(--chatbot-primary-color);
-      color: white;
-      border: none;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.3s ease;
-      left: var(--chatbot-position, right) == 'left' ? 20px : auto;
-      right: var(--chatbot-position, right) == 'right' ? 20px : auto;
-    }
-
-    .chat-button:hover {
-      background-color: #45a049;
-      transform: scale(1.05);
-    }
-
-    .container {
-      border: 1px solid var(--chatbot-border-color);
-      border-radius: 8px;
-      width: 350px;
-      height: 450px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      background-color: var(--chatbot-bg-color);
-      position: fixed;
-      bottom: 20px;
-      z-index: 9999;
-      /* Position based on --chatbot-position */
-      left: var(--chatbot-position, right) == 'left' ? 20px : auto;
-      right: var(--chatbot-position, right) == 'right' ? 20px : auto;
-      transform: translateY(100%); /* Start hidden below the screen */
-      opacity: 0;
-      visibility: hidden;
-      transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s ease-out;
-    }
-
-    .container.open {
-      transform: translateY(0); /* Slide up into view */
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .header {
-      background-color: var(--chatbot-primary-color);
-      color: white;
-      padding: 10px;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    p {
-      margin-top: 0;
-      margin-bottom: 0.5rem;
-    }
-
-    .messages {
-      flex-grow: 1;
-      padding: 10px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .message {
-      margin-bottom: 8px;
-      padding: 10px;
-      border-radius: 10px;
-      max-width: 80%;
-    }
-
-    .message.user {
-      align-self: flex-end;
-      background-color: #e0e0e0;
-      color: var(--chatbot-text-color);
-      border-bottom-right-radius: 2px;
-    }
-
-    .message.assistant {
-      align-self: flex-start;
-      background-color: var(--chatbot-primary-color);
-      color: white;
-      border-bottom-left-radius: 2px;
-      &.typing {
-        font-style: italic;
-        background-color: var(--chatbot-primary-light-color);
-      }
-
-      p:last-child {
-        margin-bottom: 0;
-      }
-    }
-
-    .input-area {
-      display: flex;
-      padding: 10px;
-      border-top: 1px solid var(--chatbot-border-color);
-    }
-
-    input {
-      flex-grow: 1;
-      padding: 8px;
-      border: 1px solid var(--chatbot-border-color);
-      border-radius: 4px;
-      margin-right: 8px;
-    }
-
-    button {
-      background-color: var(--chatbot-primary-color);
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #45a049;
-    }
-
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-  `;
+  static styles = mystyles;
 
   // Main render function
   render() {
     return html`
-      <button class="chat-button" @click=${this.toggleChat}>
+      <button class="chat-button ${`position-${this.position}`}" @click=${this.toggleChat}>
         ${this.isChatOpen ? html`&#x2715;` : html`&#x1F4AC;`}
         <!-- X or Chat bubble icon -->
       </button>
 
-      <div class="container ${this.isChatOpen ? 'open' : ''}">
+      <div class="container ${this.isChatOpen ? 'open' : ''} ${`position-${this.position}`}">
         <div class="header">${this.title}</div>
         <div class="messages">
           ${this.messages.map(
@@ -289,7 +140,7 @@ export class ChatbotWidget extends LitElement {
             placeholder="Đặt câu hỏi..."
             ?disabled=${this.isLoading}
           />
-          <button @click=${this.sendMessage} ?disabled=${this.isLoading || !this.userInput.trim()}>
+          <button @click=${this._sendMessage} ?disabled=${this.isLoading || !this.userInput.trim()}>
             ${this.isLoading ? '...' : 'Gửi'}
           </button>
         </div>
@@ -297,8 +148,9 @@ export class ChatbotWidget extends LitElement {
     `;
   }
 
-  private toggleChat() {
+  private async toggleChat() {
     this.isChatOpen = !this.isChatOpen;
+    await this.requestUpdate(); // ensure DOM update
     if (this.isChatOpen) {
       // When opening, ensure scroll to bottom
       this.updateComplete.then(() => this.scrollToBottom());
@@ -325,12 +177,12 @@ export class ChatbotWidget extends LitElement {
   // Handle Enter key to send message
   handleKeyDown(event: KeyboardEvent) {
     if (event.key === 'Enter') {
-      this.sendMessage();
+      this._sendMessage();
     }
   }
 
   // Send user message and fetch AI reply
-  async sendMessage() {
+  async _sendMessage() {
     const message = this.userInput.trim();
     if (this.isLoading || !message || !this.sessionId) return; // Ensure sessionId is available
 

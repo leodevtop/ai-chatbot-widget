@@ -1,4 +1,5 @@
 import { ChatbotSession } from '~/types';
+import ms, { StringValue } from 'ms';
 
 const SESSION_STORAGE_KEYS = {
   TOKEN: 'chatbot-token',
@@ -70,7 +71,7 @@ export async function requestNewSession(apiKey: string): Promise<ChatbotSession>
     }
 
     const { token, sessionId, expiresIn } = await response.json();
-    const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString(); // expiresIn is in seconds
+    const expiresAt = new Date(Date.now() + ms(expiresIn as StringValue) * 1000).toISOString();
 
     localStorage.setItem(SESSION_STORAGE_KEYS.TOKEN, token);
     localStorage.setItem(SESSION_STORAGE_KEYS.SESSION_ID, sessionId);

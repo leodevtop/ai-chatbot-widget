@@ -4,7 +4,10 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { getStoredSession, requestNewSession, useSession } from './services/session.service';
 import { sendMessage } from './services/message.service'; // Import the new message service
 import { renderMarkdown } from './utils/markdown.utils'; // Import the markdown utility
-import { ChatMessage, Role } from './types';
+import { ChatbotSession, ChatMessage, Role } from './types';
+import { mystyles } from './styles';
+
+import './components/button/ui-button';
 
 // Define a type for the global configuration object
 declare global {
@@ -32,12 +35,20 @@ export class ChatbotWidget extends LitElement {
   @property({ type: String }) title = 'Chatbot';
 
   // Internal reactive states
-  @state() private messages: ChatMessage[] = []; // Changed to role/content
+  @state() private messages: ChatMessage[] = [];
   @state() private userInput = '';
   @state() private isLoading = false;
   @state() private typingIndicator: string | null = null;
   @state() private sessionId: string | null = null;
   @state() private isChatOpen = false; // New state to control chat window visibility
+
+  private toggleChat() {
+    this.isChatOpen = !this.isChatOpen;
+    if (this.isChatOpen) {
+      // When opening, ensure scroll to bottom
+      this.updateComplete.then(() => this.scrollToBottom());
+    }
+  }
 
   private typingInterval: number | null = null;
 
@@ -50,7 +61,7 @@ export class ChatbotWidget extends LitElement {
   }
 
   firstUpdated() {
-    this.sendWelcomeMessage();
+    // this.startTyping(); // typing animation
   }
 
   private loadConfiguration() {
@@ -95,187 +106,40 @@ export class ChatbotWidget extends LitElement {
   }
 
   private async initSession() {
-    let session = getStoredSession();
+    const msgWelcome = '<p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p>';
+    const msgError = '<p>Lỗi: Không thể khởi tạo phiên chat.</p>';
 
-    if (session) {
+    const applySession = (session: ChatbotSession) => {
       useSession(session, (token, sessionId) => {
         this.siteToken = token;
         this.sessionId = sessionId;
       });
-    } else {
-      try {
-        session = await requestNewSession(this.siteId);
-        useSession(session, (token, sessionId) => {
-          this.siteToken = token;
-          this.sessionId = sessionId;
-        });
-      } catch (error) {
-        console.error('[ChatbotWidget] Failed to initiate new session:', error);
-        this.messages = [...this.messages, { content: 'Lỗi: Không thể khởi tạo phiên chat.', role: Role.Assistant }];
-      }
+      this.startTyping();
+      this.sendByAssistant(msgWelcome);
+    };
+
+    const stored = getStoredSession();
+    if (stored) return applySession(stored);
+
+    try {
+      const session = await requestNewSession(this.siteId);
+      this.sendByAssistant(msgWelcome);
+    } catch (err) {
+      this.sendByAssistant(msgError);
+      console.error('[ChatbotWidget] Failed to initiate new session:', err);
     }
   }
 
   // CSS styling for the chatbot UI
-  static styles = css`
-    :host {
-      display: block;
-      font-size: 13px;
-      font-family: sans-serif;
-      --chatbot-primary-color: #4caf50; /* Default, overridden by themeColor */
-      --chatbot-primary-light-color: rgba(76, 175, 79, 0.7); /* Default, overridden by themeColor */
-      --chatbot-text-color: #333;
-      --chatbot-bg-color: #f9f9f9;
-      --chatbot-border-color: #ddd;
-      --chatbot-position: right; /* Default, overridden by position */
-    }
-
-    .chat-button {
-      position: fixed;
-      bottom: 20px;
-      z-index: 10000;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background-color: var(--chatbot-primary-color);
-      color: white;
-      border: none;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.3s ease;
-      left: var(--chatbot-position, right) == 'left' ? 20px : auto;
-      right: var(--chatbot-position, right) == 'right' ? 20px : auto;
-    }
-
-    .chat-button:hover {
-      background-color: #45a049;
-      transform: scale(1.05);
-    }
-
-    .container {
-      border: 1px solid var(--chatbot-border-color);
-      border-radius: 8px;
-      width: 350px;
-      height: 450px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      background-color: var(--chatbot-bg-color);
-      position: fixed;
-      bottom: 20px;
-      z-index: 9999;
-      /* Position based on --chatbot-position */
-      left: var(--chatbot-position, right) == 'left' ? 20px : auto;
-      right: var(--chatbot-position, right) == 'right' ? 20px : auto;
-      transform: translateY(100%); /* Start hidden below the screen */
-      opacity: 0;
-      visibility: hidden;
-      transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s ease-out;
-    }
-
-    .container.open {
-      transform: translateY(0); /* Slide up into view */
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .header {
-      background-color: var(--chatbot-primary-color);
-      color: white;
-      padding: 10px;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    p {
-      margin-top: 0;
-      margin-bottom: 0.5rem;
-    }
-
-    .messages {
-      flex-grow: 1;
-      padding: 10px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .message {
-      margin-bottom: 8px;
-      padding: 10px;
-      border-radius: 10px;
-      max-width: 80%;
-    }
-
-    .message.user {
-      align-self: flex-end;
-      background-color: #e0e0e0;
-      color: var(--chatbot-text-color);
-      border-bottom-right-radius: 2px;
-    }
-
-    .message.assistant {
-      align-self: flex-start;
-      background-color: var(--chatbot-primary-color);
-      color: white;
-      border-bottom-left-radius: 2px;
-      &.typing {
-        font-style: italic;
-        background-color: var(--chatbot-primary-light-color);
-      }
-
-      p:last-child {
-        margin-bottom: 0;
-      }
-    }
-
-    .input-area {
-      display: flex;
-      padding: 10px;
-      border-top: 1px solid var(--chatbot-border-color);
-    }
-
-    input {
-      flex-grow: 1;
-      padding: 8px;
-      border: 1px solid var(--chatbot-border-color);
-      border-radius: 4px;
-      margin-right: 8px;
-    }
-
-    button {
-      background-color: var(--chatbot-primary-color);
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #45a049;
-    }
-
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-  `;
+  static styles = mystyles;
 
   // Main render function
   render() {
     return html`
-      <button class="chat-button" @click=${this.toggleChat}>
+      <ui-button @click=${this.toggleChat}>
         ${this.isChatOpen ? html`&#x2715;` : html`&#x1F4AC;`}
         <!-- X or Chat bubble icon -->
-      </button>
-
+      </ui-button>
       <div class="container ${this.isChatOpen ? 'open' : ''}">
         <div class="header">${this.title}</div>
         <div class="messages">
@@ -295,32 +159,12 @@ export class ChatbotWidget extends LitElement {
             placeholder="Đặt câu hỏi..."
             ?disabled=${this.isLoading}
           />
-          <button @click=${this.sendMessage} ?disabled=${this.isLoading || !this.userInput.trim()}>
+          <button @click=${this._sendMessage} ?disabled=${this.isLoading || !this.userInput.trim()}>
             ${this.isLoading ? '...' : 'Gửi'}
           </button>
         </div>
       </div>
     `;
-  }
-
-  private toggleChat() {
-    this.isChatOpen = !this.isChatOpen;
-    if (this.isChatOpen) {
-      // When opening, ensure scroll to bottom
-      this.updateComplete.then(() => this.scrollToBottom());
-    }
-  }
-
-  private async sendWelcomeMessage() {
-    const welcome = '<p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p>';
-
-    this.startTyping(); // typing animation
-    await new Promise((res) => setTimeout(res, 1000)); // simulate loading
-
-    this.stopTyping();
-    this.messages = [...this.messages, { content: welcome, role: Role.Assistant }]; // Changed to role/content
-    this.requestUpdate();
-    this.scrollToBottom();
   }
 
   // Handle user typing
@@ -331,13 +175,23 @@ export class ChatbotWidget extends LitElement {
   // Handle Enter key to send message
   handleKeyDown(event: KeyboardEvent) {
     if (event.key === 'Enter') {
-      this.sendMessage();
+      this._sendMessage();
     }
   }
 
+  async sendByAssistant(message: string) {
+    this.startTyping();
+    this.messages = [...this.messages, { content: message, role: Role.Assistant }];
+    await this.requestUpdate();
+    this.scrollToBottom();
+    this.stopTyping();
+  }
+
   // Send user message and fetch AI reply
-  async sendMessage() {
+  async _sendMessage() {
     const message = this.userInput.trim();
+    const smgError = 'Lỗi: Không lấy được câu trả lời.';
+
     if (this.isLoading || !message || !this.sessionId) return; // Ensure sessionId is available
 
     this.isLoading = true;
@@ -349,7 +203,7 @@ export class ChatbotWidget extends LitElement {
       input.blur();
     }
 
-    this.messages = [...this.messages, { content: message, role: Role.User }]; // Changed to role/content
+    this.messages = [...this.messages, { content: message, role: Role.User }];
     this.startTyping();
 
     try {
@@ -361,17 +215,16 @@ export class ChatbotWidget extends LitElement {
         this.sessionId! // sessionId should be available after initSession
       );
 
-      this.stopTyping();
       const html = renderMarkdown(aiReplyMarkdown); // Use the utility function
-      this.messages = [...this.messages, { content: html, role: Role.Assistant }]; // Changed to role/content
+      this.messages = [...this.messages, { content: html, role: Role.Assistant }];
     } catch (error) {
       console.error('Error sending message:', error);
-      this.stopTyping();
-      this.messages = [...this.messages, { content: 'Lỗi: Không lấy được câu trả lời.', role: Role.Assistant }]; // Changed to role/content
+      this.messages = [...this.messages, { content: smgError, role: Role.Assistant }];
     } finally {
       this.isLoading = false;
       await this.requestUpdate();
       this.scrollToBottom();
+      this.stopTyping();
     }
   }
 

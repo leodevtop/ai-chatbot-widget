@@ -14,6 +14,9 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
+        globals: {
+          lit: 'lit',
+        },
         entryFileNames: `widget.js`, // Force .js extension
       },
       // Externalize deps that shouldn't be bundled into the library

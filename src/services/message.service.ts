@@ -22,15 +22,16 @@ export async function sendMessage(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${siteToken}`,
       'x-session-id': sessionId,
+      'x-api-key': siteId,
     };
 
     // The API expects messages in a specific format, so map the current messages
     const apiMessages = messages.map((msg: ChatMessage) => ({
-      role: sanitizeRole(msg.role), // Assuming 'sender' maps directly to 'role'
-      content: msg.content, // Assuming 'text' maps directly to 'content'
+      role: sanitizeRole(msg.role),
+      content: msg.content,
     }));
 
-    const response = await fetch(`${import.meta.env.VITE_CHATBOT_API_BASE_URL}/api/chat/generate`, {
+    const response = await fetch(`${import.meta.env.VITE_CHATBOT_API_BASE_URL}/chat/generate`, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify({
