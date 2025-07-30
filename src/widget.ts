@@ -184,6 +184,7 @@ export class ChatbotWidget extends LitElement {
   // Handle user typing
   handleInput(event: Event) {
     this.userInput = (event.target as HTMLInputElement).value;
+    this.requestUpdate(); // Ensure UI updates to reflect input change and button state
   }
 
   // Handle Enter key to send message
@@ -193,12 +194,11 @@ export class ChatbotWidget extends LitElement {
     }
   }
 
-  async sendByAssistant(message: string) {
-    this.startTyping();
-    this.messages = [...this.messages, { content: message, role: Role.Assistant }];
+  private async finalizeMessageProcessing() {
+    this.stopTyping();
+    this.isLoading = false;
     await this.requestUpdate();
     this.scrollToBottom();
-    this.stopTyping();
   }
 
   // Send user message and fetch AI reply
@@ -235,16 +235,19 @@ export class ChatbotWidget extends LitElement {
       console.error('Error sending message:', error);
       this.messages = [...this.messages, { content: smgError, role: Role.Assistant }];
     } finally {
-      this.isLoading = false;
-      await this.requestUpdate();
-      this.scrollToBottom();
-      this.stopTyping();
+      await this.finalizeMessageProcessing(); // Call the new finalize function
     }
   }
 
   startTyping() {
     const dotStates = ['Đang gõ.', 'Đang gõ..', 'Đang gõ...'];
     let index = 0;
+
+    if (this.typingInterval) {
+      clearInterval(this.typingInterval);
+      this.typingInterval = null;
+    }
+
     this.typingIndicator = dotStates[0];
 
     this.typingInterval = window.setInterval(() => {
