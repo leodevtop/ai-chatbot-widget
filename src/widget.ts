@@ -4,7 +4,7 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { getStoredSession, requestNewSession, useSession } from './services/session.service';
 import { sendMessage } from './services/message.service'; // Import the new message service
 import { renderMarkdown } from './utils/markdown.utils'; // Import the markdown utility
-import { ChatMessage, Role } from './types';
+import { ChatbotSession, ChatMessage, Role } from './types'; // Import ChatbotSession
 import { mystyles } from './styles';
 import { loadConfiguration } from './utils/config.utils'; // Import the new config utility
 
@@ -44,7 +44,7 @@ export class ChatbotWidget extends LitElement {
     console.log('[ChatbotWidget] Connected');
     loadConfiguration(this); // Use the new loadConfiguration utility
     console.log('[ChatbotWidget] Site ID:', this.siteId);
-    // initSession() will now be called when the chatbox is opened for the first time
+    this.initSession(); // Initialize session immediately on load
   }
 
   firstUpdated() {
@@ -61,48 +61,40 @@ export class ChatbotWidget extends LitElement {
     const msgError = '<p>Lỗi: Không thể khởi tạo phiên chat.</p>';
     this.startTyping(); // Keep typing indicator for session initiation
 
-    const session = getStoredSession();
-    if (session) {
-      useSession(session, (token, sessionId) => {
-        this.siteToken = token;
-        this.sessionId = sessionId;
-      });
-      this.errorState = null; // Clear error on successful init
-      this.quickReplies = ['Giá dịch vụ', 'Tính năng', 'Liên hệ hỗ trợ']; // Set default quick replies
-      this.stopTyping(); // Stop typing after session is established
-      await this.requestUpdate();
-      this.scrollToBottom();
-      // Add welcome message only if messages are empty
-      if (this.messages.length === 0) {
-        this.messages = [...this.messages, { content: msgWelcome, role: Role.Assistant }];
-        await this.requestUpdate();
-        this.scrollToBottom();
-      }
-      return;
-    }
-
     try {
-      const newSession = await requestNewSession(this.siteId);
-      useSession(newSession, (token, sessionId) => {
+      const session = getStoredSession();
+      let currentSession: ChatbotSession;
+
+      if (session) {
+        currentSession = session;
+      } else {
+        currentSession = await requestNewSession(this.siteId);
+      }
+
+      useSession(currentSession, (token, sessionId) => {
         this.siteToken = token;
         this.sessionId = sessionId;
       });
+
       this.errorState = null; // Clear error on successful init
       this.quickReplies = ['Giá dịch vụ', 'Tính năng', 'Liên hệ hỗ trợ']; // Set default quick replies
-      this.stopTyping(); // Stop typing after session is established
-      await this.requestUpdate();
-      this.scrollToBottom();
+
       // Add welcome message only if messages are empty
       if (this.messages.length === 0) {
         this.messages = [...this.messages, { content: msgWelcome, role: Role.Assistant }];
-        await this.requestUpdate();
-        this.scrollToBottom();
       }
     } catch (err) {
       this.errorState = 'init'; // Set error state for init failure
       this.quickReplies = []; // Clear quick replies on error
-      await this.addAssistantMessageAndFinalize(msgError); // Use finalize for error message
+      // Add error message only if messages are empty, otherwise it will be handled by error banner
+      if (this.messages.length === 0) {
+        this.messages = [...this.messages, { content: msgError, role: Role.Assistant }];
+      }
       console.error('[ChatbotWidget] Failed to initiate new session:', err);
+    } finally {
+      this.stopTyping(); // Stop typing after session is established or failed
+      await this.requestUpdate();
+      this.scrollToBottom();
     }
   }
 
@@ -158,7 +150,6 @@ export class ChatbotWidget extends LitElement {
   }
 
   private _handleToggleChat() {
-    const msgWelcome = '<p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p>';
     this.isChatOpen = !this.isChatOpen;
     if (this.isChatOpen) {
       this.teaserVisible = false; // Hide teaser when chat opens
@@ -166,18 +157,7 @@ export class ChatbotWidget extends LitElement {
         clearTimeout(this.teaserTimeout);
         this.teaserTimeout = null;
       }
-      // Initialize session and add welcome message if chat is opened for the first time
-      if (!this.sessionId) {
-        this.initSession().then(() => {
-          if (this.sessionId && this.messages.length === 0) {
-            this.addAssistantMessageAndFinalize(msgWelcome);
-          } else {
-            this.updateComplete.then(() => this.scrollToBottom());
-          }
-        });
-      } else {
-        this.updateComplete.then(() => this.scrollToBottom());
-      }
+      this.updateComplete.then(() => this.scrollToBottom());
     }
   }
 
