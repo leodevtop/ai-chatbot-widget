@@ -10,6 +10,7 @@ import { loadConfiguration } from './utils/config.utils'; // Import the new conf
 
 import './components/button/ui-button';
 import './components/chat-launcher-button/chat-launcher-button'; // Import the new component
+import './components/teaser-message/teaser-message'; // Import the new teaser message component
 
 @customElement('chatbot-widget')
 export class ChatbotWidget extends LitElement {
@@ -27,16 +28,10 @@ export class ChatbotWidget extends LitElement {
   @state() private typingIndicator: string | null = null;
   @state() private sessionId: string | null = null;
   @state() private isChatOpen = false; // New state to control chat window visibility
-
-  // No longer needed here, moved to ChatLauncherButton
-  // private toggleChat() {
-  //   this.isChatOpen = !this.isChatOpen;
-  //   if (this.isChatOpen) {
-  //     this.updateComplete.then(() => this.scrollToBottom());
-  //   }
-  // }
+  @state() private teaserVisible = false; // New state for teaser message visibility
 
   private typingInterval: number | null = null;
+  private teaserTimeout: number | null = null;
 
   connectedCallback() {
     super.connectedCallback();
@@ -47,7 +42,12 @@ export class ChatbotWidget extends LitElement {
   }
 
   firstUpdated() {
-    // this.startTyping(); // typing animation
+    // Show teaser message after a delay if chat is not open
+    this.teaserTimeout = window.setTimeout(() => {
+      if (!this.isChatOpen) {
+        this.teaserVisible = true;
+      }
+    }, 5000); // Show after 5 seconds
   }
 
   private async initSession() {
@@ -88,6 +88,10 @@ export class ChatbotWidget extends LitElement {
         @toggle-chat=${this._handleToggleChat}
       ></chat-launcher-button>
 
+      ${!this.isChatOpen && this.teaserVisible
+        ? html`<teaser-message .visible=${this.teaserVisible}></teaser-message>`
+        : ''}
+
       <div class="container ${this.isChatOpen ? 'open' : ''}">
         <div class="header">${this.title}</div>
         <div class="messages">
@@ -118,6 +122,11 @@ export class ChatbotWidget extends LitElement {
   private _handleToggleChat() {
     this.isChatOpen = !this.isChatOpen;
     if (this.isChatOpen) {
+      this.teaserVisible = false; // Hide teaser when chat opens
+      if (this.teaserTimeout) {
+        clearTimeout(this.teaserTimeout);
+        this.teaserTimeout = null;
+      }
       this.updateComplete.then(() => this.scrollToBottom());
     }
   }
