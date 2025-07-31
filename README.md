@@ -1,61 +1,71 @@
-# Frontend Widget.js
+# Chat Widget - SaaS AI Frontend
 
 ## Giới thiệu
 
-Dự án `Frontend Widget.js` là một thành phần giao diện người dùng nhẹ, có thể nhúng trực tiếp vào bất kỳ website nào của khách hàng SaaS. Nó cung cấp giao diện tương tác giữa người dùng cuối và hệ thống AI chatbot, cho phép người dùng gửi và nhận tin nhắn từ backend API một cách liền mạch.
+Dự án này là một widget chat có thể nhúng, được xây dựng bằng Lit, TypeScript và Vite. Nó cung cấp một giao diện người dùng gọn nhẹ để tương tác với các dịch vụ AI chatbot, có thể dễ dàng tích hợp vào bất kỳ trang web nào.
 
-Đây là một phần của hệ sinh thái SaaS AI Chatbot lớn hơn, được thiết kế theo kiến trúc phân tán để đảm bảo tính bảo mật, khả năng mở rộng và dễ dàng quản lý.
+Widget được thiết kế để có khả năng tùy biến cao, quản lý trạng thái hiệu quả thông qua các controller phản ứng (reactive controllers), và tuân thủ các thực tiễn phát triển web hiện đại.
 
 ## Tính năng chính
 
-- **Giao diện chat nổi:** Cung cấp một nút nổi (floating button) và cửa sổ chat có thể nhúng vào bất kỳ website nào.
-- **Quản lý phiên (Session Management):** Hỗ trợ khởi tạo phiên làm việc, gửi và nhận tin nhắn từ backend API. Tự động giữ trạng thái session trong `localStorage` để tái sử dụng giữa các lần tải trang hoặc tab mới.
-- **Cấu hình linh hoạt:** Cho phép cấu hình đơn giản về giao diện (vị trí, màu sắc, tiêu đề) thông qua script nhúng hoặc biến toàn cục.
-- **Bảo mật:** Sử dụng cơ chế xác thực hai bước với Public Widget API Key và Secure Session Token (JWT) ngắn hạn, cùng với kiểm tra `Origin` để đảm bảo an toàn.
-- **Tương thích rộng:** Được thiết kế để hoạt động trên mọi trang HTML tĩnh hoặc SPA phổ biến mà không xung đột CSS.
+- **Kiến trúc dựa trên Web Components:** Sử dụng Lit để tạo ra các custom elements có thể tái sử dụng và đóng gói.
+- **Quản lý trạng thái phản ứng:** Tách biệt logic khỏi UI bằng cách sử dụng các Reactive Controllers (`useChatState`, `useAutoTeaser`, `useTypingIndicator`).
+- **Tự động quản lý phiên:** Tự động xử lý việc tạo, lưu trữ và khôi phục phiên làm việc của người dùng qua `localStorage`.
+- **Tùy chỉnh linh hoạt:** Dễ dàng thay đổi giao diện và hành vi thông qua các thuộc tính HTML của widget.
+- **Build hiệu quả:** Sử dụng Vite để có trải nghiệm phát triển nhanh và build ra một file JavaScript duy nhất.
 
-## Cách nhúng vào website khách hàng
+## Cách nhúng và Cấu hình
 
-Widget được nhúng vào website của khách hàng theo phong cách Google Tag Manager bằng cách thêm một thẻ `<script>` vào phần `<head>` của trang HTML:
+### Nhúng Widget
+
+Widget được thiết kế để tự động mount vào trang. Bạn chỉ cần nhúng file script đã được build vào trang HTML của mình:
 
 ```html
-<script>
-  (function (w, d, s, u, i) {
-    var js = d.createElement(s);
-    js.src = u + '?id=' + i;
-    js.async = true;
-    d.head.appendChild(js);
-  })(window, document, 'script', 'https://widget.chatbox.com/widget.js', 'YOUR_WEBSITE_CODE_OR_API_KEY');
-</script>
+<script type="module" src="/path/to/your/widget.js?id=YOUR_SITE_ID"></script>
+```
+Trong đó `YOUR_SITE_ID` là Public Widget API Key định danh website của bạn.
+
+### Tùy chỉnh Widget
+
+Bạn có thể tùy chỉnh widget trực tiếp thông qua các thuộc tính trên thẻ HTML `chat-widget` (nếu bạn mount thủ công) hoặc thông qua các tham số trên URL của script.
+
+**Ví dụ:**
+```html
+<!-- Các thuộc tính này sẽ được script mount tự động đọc -->
+<script type="module" src="/widget.js?id=pk-123&themeColor=%230066FF&title=Hỗ%20trợ"></script>
 ```
 
-- Thay thế `https://widget.chatbox.com/widget.js` bằng URL thực tế của file `widget.js` của bạn.
-- Thay thế `YOUR_WEBSITE_CODE_OR_API_KEY` bằng `websiteCode` hoặc `apiKey` (Public Widget API Key) định danh website/tenant của bạn.
+**Các thuộc tính có sẵn:**
 
-### Cấu hình tùy chỉnh (Tùy chọn)
+- `site-id` / `id`: (Bắt buộc) ID định danh cho website của bạn.
+- `theme-color`: Màu sắc chủ đạo của widget (mặc định: `#4caf50`).
+- `title`: Tiêu đề hiển thị trên header của chat box (mặc định: `Chatbot`).
+- `position`: Vị trí của widget, `left` hoặc `right` (mặc định: `right`).
+- `quick-replies-default`: Danh sách các câu trả lời nhanh mặc định, phân tách bởi dấu `|`.
 
-Bạn có thể tùy chỉnh giao diện của widget bằng cách định nghĩa biến toàn cục `window.ChatboxWidgetConfig` trước khi nhúng script:
+## Kiến trúc & Luồng hoạt động
 
-```js
-window.ChatboxWidgetConfig = {
-  position: 'left', // 'right' (mặc định) hoặc 'left'
-  themeColor: '#0066FF', // Màu chủ đạo của widget
-  title: 'Hỗ trợ khách hàng', // Tiêu đề hiển thị trong cửa sổ chat
-};
+### Công nghệ & Cấu trúc
+
+- **Framework:** [Lit](https://lit.dev/)
+- **Ngôn ngữ:** [TypeScript](https://www.typescriptlang.org/)
+- **Công cụ Build:** [Vite](https://vitejs.dev/)
+- **Quản lý gói:** [pnpm](https://pnpm.io/)
+
+```
+/src
+├── components/         # Các thành phần UI (Web Components)
+├── logic/              # Logic nghiệp vụ, không phụ thuộc UI
+│   ├── api/            # Giao tiếp với backend
+│   ├── hooks/          # Các Reactive Controllers (hooks)
+│   └── utils/          # Các hàm tiện ích
+├── types/              # Định nghĩa các kiểu dữ liệu chung
+└── mount.ts            # Điểm khởi đầu, tự động mount widget
 ```
 
-## Kiến trúc kỹ thuật
-
-- **File:** Một file JavaScript tĩnh (`widget.js`), có thể tải từ CDN hoặc domain riêng.
-- **Giao diện UI:** Có thể là Shadow DOM, iframe hoặc inline DOM tùy cấu hình.
-- **Lưu trữ trạng thái:** Sử dụng `localStorage` để lưu `sessionToken`, `sessionId`, `expiresAt`.
-- **API endpoints:** Gọi đến backend như `/session/initiate` và `/chat`.
-- **Công nghệ:** Vite + TypeScript để build nhanh, Lit / Vanilla JS cho UI component đơn giản, nhỏ gọn, không phụ thuộc framework. Sử dụng `marked` để parse markdown và `DOMPurify` để sanitize nội dung từ AI.
-
-## Luồng hoạt động của Session (Client-side)
+### Luồng hoạt động của Session
 
 1.  **Khi widget được load:**
-    - Lấy thông tin cấu hình từ query (`id=abc123`).
     - Kiểm tra `localStorage` xem có session còn hạn không (`chatbot-token`, `chatbot-session-id`, `chatbot-expires-at`).
     - Nếu chưa có hoặc đã hết hạn: gọi `POST /session/initiate` để tạo session mới.
     - Nhận `token`, `sessionId`, `expiresIn` và lưu lại vào `localStorage`.
@@ -64,18 +74,15 @@ window.ChatboxWidgetConfig = {
     - Nhận phản hồi từ chatbot, hiển thị lên giao diện.
 3.  **Khi người dùng reload/mở tab mới:**
     - Nếu session còn hạn trong `localStorage`, tự động khôi phục mà không cần tạo mới.
-    - Nếu token hết hạn, một session mới sẽ được yêu cầu.
 
-## Tương tác API với Backend
-
-`widget.js` tương tác với Backend API thông qua các endpoint sau:
+### Tương tác API với Backend
 
 - **`POST /session/initiate`**:
   - **Mô tả:** Endpoint đầu tiên được gọi để lấy Secure Session Token. Yêu cầu Public Widget API Key trong header `x-api-key` và `Origin` hợp lệ.
   - **Phản hồi:** Trả về `token` (Secure Session Token JWT), `sessionId` (UUID gốc), và `expiresIn` (thời gian hết hạn).
 - **`POST /chat`**:
   - **Mô tả:** Gửi tin nhắn đến chatbot và nhận phản hồi. Yêu cầu `Authorization: Bearer <Secure Session Token>` và `x-session-id` trong header.
-  - **Phản hồi:** Trả về `response` (câu trả lời của AI) và `context` (tùy chọn, các đoạn ngữ cảnh RAG).
+  - **Phản hồi:** Trả về `response` (câu trả lời của AI).
 
 ## Bảo mật
 
@@ -83,31 +90,43 @@ window.ChatboxWidgetConfig = {
 - **Origin check:** Backend xác minh `origin` từ header của mọi yêu cầu.
 - **Token hết hạn:** JWT session token có TTL rõ ràng và được ký bằng khóa bí mật của Backend.
 - **Session isolation:** Mỗi website chỉ được tạo session riêng biệt, không thể dùng chéo.
-- **Secure Session Token (JWT):** Được sử dụng cho các yêu cầu chat tiếp theo, có thời gian sống ngắn và chứa các thông tin cần thiết như `sessionId`, `ownerId`, `origin`, và `scopes`.
+- **Secure Session Token (JWT):** Được sử dụng cho các yêu cầu chat tiếp theo, có thời gian sống ngắn.
 
 ## Phát triển
 
-Dự án sử dụng Vite và TypeScript để xây dựng. Các thành phần UI được viết bằng Lit hoặc Vanilla JS để đảm bảo kích thước file nhỏ gọn và không phụ thuộc framework.
+### Yêu cầu
+
+- [Node.js](https://nodejs.org/) (phiên bản 18 trở lên)
+- [pnpm](https://pnpm.io/installation)
 
 ### Cài đặt
 
+Cài đặt các dependencies của dự án:
 ```bash
-# Cài đặt dependencies
 pnpm install
 ```
 
-### Chạy phát triển
+### Chạy server phát triển
 
+Khởi động server phát triển của Vite với tính năng hot-reload:
 ```bash
-# Chạy server phát triển
 pnpm dev
 ```
+Server sẽ chạy tại `http://localhost:5173`.
 
 ### Build sản phẩm
 
+Biên dịch và đóng gói widget thành một file JavaScript duy nhất để triển khai:
 ```bash
-# Build ra file widget.js và widget.css
 pnpm build
+```
+File kết quả sẽ được tạo trong thư mục `dist/`.
+
+### Chạy kiểm thử
+
+Chạy các bài kiểm thử đơn vị (unit tests) bằng Vitest:
+```bash
+pnpm test
 ```
 
 ## Mở rộng tương lai
