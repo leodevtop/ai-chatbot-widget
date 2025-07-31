@@ -1,5 +1,5 @@
-import { ChatMessage } from '~/types';
-import { sanitizeRole } from '../utils/common.utils';
+import { ChatMessage } from '~/types/chat.js';
+import { sanitizeRole } from '~/logic/utils/common.utils.js';
 
 /**
  * Sends a chat message to the backend API.

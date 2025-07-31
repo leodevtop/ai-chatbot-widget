@@ -1,20 +1,12 @@
-import { ChatbotSession } from '~/types';
+import { ChatbotSession } from '~/types/chat.js';
 import ms, { StringValue } from 'ms';
+import { isExpired } from '~/logic/utils/time.utils.js';
 
 const SESSION_STORAGE_KEYS = {
   TOKEN: 'chatbot-token',
   SESSION_ID: 'chatbot-session-id',
   EXPIRES_AT: 'chatbot-expires-at',
 };
-
-/**
- * Checks if a given expiration timestamp is in the past.
- * @param expiresAt The ISO string timestamp of expiration.
- * @returns True if expired, false otherwise.
- */
-function isExpired(expiresAt: string): boolean {
-  return new Date(expiresAt).getTime() < Date.now();
-}
 
 /**
  * Retrieves stored session data from localStorage.
@@ -71,7 +63,7 @@ export async function requestNewSession(apiKey: string): Promise<ChatbotSession>
     }
 
     const { token, sessionId, expiresIn } = await response.json();
-    const expiresAt = new Date(Date.now() + ms(expiresIn as StringValue) * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + ms(expiresIn as StringValue)).toISOString();
 
     localStorage.setItem(SESSION_STORAGE_KEYS.TOKEN, token);
     localStorage.setItem(SESSION_STORAGE_KEYS.SESSION_ID, sessionId);

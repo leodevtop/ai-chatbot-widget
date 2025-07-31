@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "declaration": true,           // sinh file .d.ts
+    "declarationMap": true,
+    "emitDecoratorMetadata": false, // nếu không cần reflect
+    "sourceMap": false,            // nếu không muốn debug khi build
+    "removeComments": true,        // loại bỏ comment trong build
+    "noEmit": false                // bật emit ra file
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["tests", "node_modules", "dist"]
+}

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "vite build && cp dist/widget.js public/dist/widget.js",
+    "build": "vite build",
     "dev": "vite dev",
     "test": "vitest"
   },
@@ -13,6 +13,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
+    "date-fns-tz": "^3.2.0",
     "dompurify": "^3.2.6",
     "lit": "^3.3.1",
     "marked": "^16.0.0",
@@ -22,7 +23,9 @@
   "devDependencies": {
     "@types/ms": "^2.1.0",
     "jsdom": "^26.1.0",
+    "path": "^0.12.7",
     "typescript": "^5.8.3",
+    "url": "^0.11.4",
     "vitest": "^3.2.4"
   }
 }

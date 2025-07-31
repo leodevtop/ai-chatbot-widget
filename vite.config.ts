@@ -1,4 +1,8 @@
 import { defineConfig } from 'vite';
+import { resolve } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   root: '.', // Set the root directory for Vite to 'public'
@@ -7,20 +11,23 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     lib: {
-      entry: 'src/widget.ts',
+      entry: resolve(__dirname, 'src/mount.ts'),
       name: 'ChatboxWidget',
       formats: ['iife'], // umd,es
-      fileName: 'widget',
+      fileName: () => 'widget.js'
     },
     rollupOptions: {
+      // external: ['lit'], // not bundle lit
       output: {
         globals: {
-          lit: 'lit',
-        },
-        entryFileNames: `widget.js`, // Force .js extension
-      },
-      // Externalize deps that shouldn't be bundled into the library
-      // external: /^lit/, // Removed this line to bundle Lit
+          lit: 'lit'
+        }
+      }
+    }
+  },
+  resolve: {
+    alias: {
+      '~': resolve(__dirname, 'src'),
     },
   },
 });

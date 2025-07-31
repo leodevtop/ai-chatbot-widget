@@ -1,10 +1,8 @@
 import { LitElement, html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement } from 'lit/decorators.js';
 
-@customElement('chat-launcher-button')
-export class ChatLauncherButton extends LitElement {
-  @property({ type: Boolean }) isChatOpen = false;
-
+@customElement('chat-launcher')
+export class ChatLauncher extends LitElement {
   static styles = css`
     :host {
       display: block;
@@ -36,10 +34,11 @@ export class ChatLauncherButton extends LitElement {
   `;
 
   render() {
-    return html` <button @click=${this._handleClick}>${this.isChatOpen ? html`&#x2715;` : html`&#x1F4AC;`}</button> `;
+    // This button is only visible when the chat is closed, so it always shows the "open" icon.
+    return html` <button @click=${this._handleClick}>&#x1F4AC;</button> `;
   }
 
   private _handleClick() {
-    this.dispatchEvent(new CustomEvent('toggle-chat', { bubbles: true, composed: true }));
+    this.dispatchEvent(new CustomEvent('open-chat', { bubbles: true, composed: true }));
   }
 }

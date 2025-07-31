@@ -1,4 +1,4 @@
-import { Role } from '../types';
+import { Role } from '~/types/chat.js';
 
 export const ROLES: Role[] = Object.values(Role);
 

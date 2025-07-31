@@ -3,7 +3,7 @@ import { customElement, property } from 'lit/decorators.js';
 
 @customElement('quick-replies')
 export class QuickReplies extends LitElement {
-  @property({ type: Array }) replies: string[] = [];
+  @property({ type: Array }) items: string[] = [];
 
   static styles = css`
     :host {
@@ -33,16 +33,23 @@ export class QuickReplies extends LitElement {
   `;
 
   render() {
+    if (!this.items || this.items.length === 0) {
+      return null;
+    }
     return html`
-      ${this.replies.map(
-        (reply) => html`
-          <button @click=${() => this._handleClick(reply)}>${reply}</button>
+      ${this.items.map(
+        (item) => html`
+          <button @click=${() => this._handleClick(item)}>${item}</button>
         `
       )}
     `;
   }
 
   private _handleClick(reply: string) {
-    this.dispatchEvent(new CustomEvent('quick-reply-selected', { detail: reply, bubbles: true, composed: true }));
+    this.dispatchEvent(new CustomEvent('quick-reply', {
+      detail: { message: reply },
+      bubbles: true,
+      composed: true
+    }));
   }
 }
