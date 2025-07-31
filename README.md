@@ -6,6 +6,8 @@ Dự án này là một widget chat có thể nhúng, được xây dựng bằn
 
 Widget được thiết kế để có khả năng tùy biến cao, quản lý trạng thái hiệu quả thông qua các controller phản ứng (reactive controllers), và tuân thủ các thực tiễn phát triển web hiện đại.
 
+![alt text](docs/chat-preview.png)
+
 ## Tính năng chính
 
 - **Kiến trúc dựa trên Web Components:** Sử dụng Lit để tạo ra các custom elements có thể tái sử dụng và đóng gói.
